@@ -164,9 +164,9 @@
             {
                 min_counts[c] = min_counts1[c];
             }
-            if (max_count1[c] < max_counts[c])
+            if (max_counts1[c] < max_counts[c])
             {
-                max_counts[c] = max_count1[c];
+                max_counts[c] = max_counts1[c];
             }
         }
         
