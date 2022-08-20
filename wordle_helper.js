@@ -55,6 +55,17 @@
         guess_input.value = options[idx];
     }
     
+    const create_counts = (value = 0) =>
+    {
+        let counts = {};
+        for (let cc = 65; cc< 91; cc++)
+        {
+            let c = String.fromCharCode(cc);
+            counts[c] = value;
+        }
+        return counts;
+    }
+    
     const reset = () =>
     {
         options = [...words];
@@ -63,8 +74,9 @@
         feedback_input.value = "";
         div_status_content.innerHTML ="";        
         
-        exclude_sets = [new Set(), new Set(), new Set(), new Set(), new Set()];
-        must_have = new Set();
+        min_counts = create_counts();
+        max_counts = create_counts(5);
+        exclude_sets = [new Set(), new Set(), new Set(), new Set(), new Set()]
     }
     
     const filter = () =>
@@ -77,6 +89,9 @@
         
         const div_line = document.createElement("div");
         div_status_content.append(div_line);
+        
+        let min_counts1 = create_counts();
+        let max_counts1 = create_counts(5);
         
         for (let i =0; i<5; i++)
         {
@@ -108,14 +123,14 @@
             
             if (j==1)
             {
-                must_have.add(c);
+                min_counts1[c]++;
                 exclude_sets[i].add(c);
             }
             else if (j==2)
             {
+                min_counts1[c]++;
                 if (exclude_sets[i].size<25)
-                {                    
-                    must_have.delete(c);
+                {
                     for (let cc = 65; cc< 91; cc++)
                     {
                         let c2 = String.fromCharCode(cc);
@@ -128,27 +143,30 @@
             }
             else
             {
-                for (let k =0; k<5; k++)
-                {
-                    let j2 = feedback[k];
-                    if (j2!=2)
-                    {
-                        exclude_sets[k].add(c);
-                    }
-                }
+                exclude_sets[i].add(c);
             }
         }
         
-        for (let c of must_have)
+        for (let i =0; i<5; i++)
         {
-            for (let i =0; i<5; i++)
+            let c = guess[i];
+            let j = feedback[i];
+            if (j!=1 && j!=2)
             {
-                let c2 = guess[i];
-                let j = feedback[i];
-                if (j==1 && c2!=c)
-                {
-                    exclude_sets[i].delete(c);
-                }
+                max_counts1[c] = min_counts1[c];
+            }          
+        }
+        
+        for (let cc = 65; cc< 91; cc++)
+        {
+            let c = String.fromCharCode(cc);
+            if (min_counts1[c] > min_counts[c])
+            {
+                min_counts[c] = min_counts1[c];
+            }
+            if (max_count1[c] < max_counts[c])
+            {
+                max_counts[c] = max_count1[c];
             }
         }
         
@@ -156,6 +174,7 @@
         {
             const uword = options[i].toUpperCase();
             let remove = false;
+            let counts = create_counts();            
             for (let j=0;j<5;j++)
             {
                 let c = uword[j];
@@ -164,27 +183,23 @@
                     remove = true;
                     break;
                 }
+                counts[c]++;
             }
             if (!remove)
             {
-                let undecided = "";
-                for (let j=0;j<5;j++)
+                for(let c in counts)
                 {
-                    if (exclude_sets[j].size<25)
-                    {
-                        undecided += uword[j];
-                    }
-                }
-                
-                for (let c of must_have)
-                {
-                    if (undecided.indexOf(c)<0)
+                    let min_count = min_counts[c];
+                    let max_count = max_counts[c];
+                    let count = counts[c];
+                    if (count<min_count || count>max_count)
                     {
                         remove = true;
                         break;
                     }
                 }
             }
+            
             if (remove)
             {
                 options.splice(i, 1);
