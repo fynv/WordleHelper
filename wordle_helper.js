@@ -4,10 +4,10 @@
     const word_list = await response.text(); 
     let words = word_list.split(/\r?\n/);
     
-    const main_content = document.getElementById("main_content");
+    const wrapper = document.getElementsByClassName("wrapper")[0];
     
     const container = document.createElement("div");
-    main_content.append(container);
+    wrapper.append(container);
        
     {
         const div_list = document.createElement("div");
