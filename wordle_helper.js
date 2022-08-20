@@ -11,7 +11,7 @@
        
     {
         const div_list = document.createElement("div");
-        div_list.style.cssText = "display: block; float: left;";
+        div_list.style.cssText = "display: block; float: left; text-align: center;";
         container.append(div_list);
         
         const label_list = document.createElement("div");
@@ -186,7 +186,7 @@
     
     {
         const div_guess = document.createElement("div");
-        div_guess.style.cssText = "display: block; float: left;";
+        div_guess.style.cssText = "display: block; float: left; text-align: center;";
         container.append(div_guess);
         
         const label_guess = document.createElement("div");
@@ -226,7 +226,7 @@
     
     {
         const div_status = document.createElement("div");
-        div_status.style.cssText = "display: block; float: left;";
+        div_status.style.cssText = "display: block; float: left; text-align: center;";
         container.append(div_status);
         
         const label_status = document.createElement("div");
