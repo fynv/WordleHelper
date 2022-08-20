@@ -139,6 +139,19 @@
             }
         }
         
+        for (let c of must_have)
+        {
+            for (let i =0; i<5; i++)
+            {
+                let c2 = guess[i];
+                let j = feedback[i];
+                if (j==1 && c2!=c)
+                {
+                    exclude_sets[i].delete(c);
+                }
+            }
+        }
+        
         for (let i = 0; i< options.length; i++)
         {
             const uword = options[i].toUpperCase();
