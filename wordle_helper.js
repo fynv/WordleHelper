@@ -1,6 +1,6 @@
 (async () =>
 {
-    let response = await fetch("valid-wordle-words.txt");
+    let response = await fetch("wordle_freq_sorted.txt");
     const word_list = await response.text(); 
     let words = word_list.split(/\r?\n/);
     
@@ -47,12 +47,7 @@
             
             div_word_list.append(div_word);
         }
-    }
-    
-    const random_guess = () =>
-    {
-        let idx = Math.floor(Math.random() * options.length);
-        guess_input.value = options[idx];
+        guess_input.value = options[0];
     }
     
     const create_counts = (value = 0) =>
@@ -69,8 +64,7 @@
     const reset = () =>
     {
         options = [...words];
-        update_list();
-        random_guess();
+        update_list();        
         feedback_input.value = "";
         div_status_content.innerHTML ="";        
         
@@ -208,7 +202,6 @@
         }
         
         update_list();
-        random_guess();
         feedback_input.value = "";
     }
     
