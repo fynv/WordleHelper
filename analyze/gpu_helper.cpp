@@ -251,13 +251,12 @@ int main()
 {
 	std::vector<std::string> all_words;
 	{
-		FILE* fp = fopen("wordle_freq.txt", "r");
+		FILE* fp = fopen("wordle_machine_optimized.txt", "r");
 		char line[100];
 		while (fgets(line, 100, fp))
 		{
-			std::string s_line = line;
-			int pos = s_line.find(',');
-			std::string word = s_line.substr(0, pos);
+			char word[100];
+			sscanf(line, "%s", word);
 			all_words.push_back(word);
 		}
 		fclose(fp);
@@ -414,3 +413,5 @@ int main()
 
 	return 0;
 }*/
+
+
