@@ -1,6 +1,6 @@
 (async () =>
 {
-    let response = await fetch("wordle_machine_optimized.txt");
+    let response = await fetch("wordle_freq_sorted.txt");
     const word_list = await response.text(); 
     let words = word_list.split(/\r?\n/);
     
@@ -65,7 +65,7 @@
     {
         options = [...words];
         update_list();
-        guess_input.value = "slate";
+        guess_input.value = "trace";
         feedback_input.value = "";
         div_status_content.innerHTML ="";        
         
