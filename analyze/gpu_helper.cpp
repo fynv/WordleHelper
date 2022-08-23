@@ -188,7 +188,6 @@ int main()
 	return 0;
 }
 
-
 /*
 int main()
 {
@@ -212,8 +211,7 @@ int main()
 		
 		std::vector<std::string> words = all_words;
 		
-		int guess_count = 0;
-		std::unordered_set<char> exclude_sets[5];
+		int guess_count = 0;		
 		while (true)
 		{
 			std::string guess;
@@ -262,81 +260,22 @@ int main()
 			}
 			if (match) break;
 
-			unsigned char min_counts[26]; memset(min_counts, 0, 26);
-			unsigned char max_counts[26]; memset(max_counts, 5, 26);
-			for (int i = 0; i < 5; i++)
-			{
-				char c = guess[i];
-				int j = feedback[i];
-
-				if (j == 1)
-				{
-					min_counts[c - 'a']++;
-					exclude_sets[i].insert(c);
-				}
-				else if (j == 2)
-				{
-					min_counts[c - 'a']++;
-					if (exclude_sets[i].size() < 25)
-					{
-						for (int k = 0; k < 26; k++)
-						{
-							char c2 = 'a' + k;
-							if (c2 != c)
-							{
-								exclude_sets[i].insert(c2);
-							}
-						}
-					}
-				}
-				else
-				{
-					exclude_sets[i].insert(c);
-				}
-			}
-
-			for (int i = 0; i < 5; i++)
-			{
-				char c = guess[i];
-				int j = feedback[i];
-				if (j != 1 && j != 2)
-				{
-					max_counts[c - 'a'] = min_counts[c - 'a'];
-				}
-			}
-
 			for (size_t i = 0; i < words.size(); i++)
 			{
 				std::string word = words[i];
 				bool remove = false;
-				unsigned char counts[26]; memset(counts, 0, 26);
-
+				
+				int feedback2[5];
+				judge(word, guess, feedback2);
 				for (int j = 0; j < 5; j++)
 				{
-					char c = word[j];
-					auto iter = exclude_sets[j].find(c);
-					if (iter != exclude_sets[j].end())
+					if (feedback2[j] != feedback[j])
 					{
 						remove = true;
 						break;
 					}
-					counts[c - 'a']++;
 				}
-
-				if (!remove)
-				{
-					for (int k = 0; k < 26; k++)
-					{
-						unsigned char min_count = min_counts[k];
-						unsigned char max_count = max_counts[k];
-						unsigned char count = counts[k];
-						if (count<min_count || count>max_count)
-						{
-							remove = true;
-							break;
-						}
-					}
-				}
+				
 				if (remove)
 				{
 					words.erase(words.begin() + i);
