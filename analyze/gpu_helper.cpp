@@ -213,6 +213,7 @@ int main()
 	return 0;
 }
 
+
 /*void judge(const std::string& truth, const std::string& guess, int feedback[5])
 {
 	unsigned char used[5] = { 0,0,0,0,0 };
@@ -276,7 +277,7 @@ int main()
 			std::string guess;
 			if (guess_count == 0)
 			{
-				guess = "raise";
+				guess = "slate";
 			}
 			else
 			{
@@ -412,6 +413,6 @@ int main()
 	printf("ave: %f\n", ave_count);
 
 	return 0;
-}*/
-
+}
+*/
 
