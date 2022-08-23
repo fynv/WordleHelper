@@ -50,15 +50,37 @@
         guess_input.value = options[0];
     }
     
-    const create_counts = (value = 0) =>
+    const judge = (truth, guess) =>
     {
-        let counts = {};
-        for (let cc = 65; cc< 91; cc++)
+        feedback = [0,0,0,0,0];
+        used = [0,0,0,0,0];        
+        
+        for (let i = 0; i < 5; i++)
         {
-            let c = String.fromCharCode(cc);
-            counts[c] = value;
+            if (guess[i] == truth[i])
+            {
+                feedback[i] = 2;
+                used[i] = 1;
+            }
         }
-        return counts;
+
+        for (let i = 0; i < 5; i++)
+        {
+            if (feedback[i] == 0)
+            {
+                for (let j = 0; j < 5; j++)
+                {
+                    if (used[j] == 0 && guess[i] == truth[j])
+                    {
+                        feedback[i] = 1;
+                        used[j] = 1;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return feedback;
     }
     
     const reset = () =>
@@ -68,10 +90,6 @@
         guess_input.value = "trace";
         feedback_input.value = "";
         div_status_content.innerHTML ="";        
-        
-        min_counts = create_counts();
-        max_counts = create_counts(5);
-        exclude_sets = [new Set(), new Set(), new Set(), new Set(), new Set()]
     }
     
     const filter = () =>
@@ -84,9 +102,6 @@
         
         const div_line = document.createElement("div");
         div_status_content.append(div_line);
-        
-        let min_counts1 = create_counts();
-        let max_counts1 = create_counts(5);
         
         for (let i =0; i<5; i++)
         {
@@ -111,90 +126,21 @@
             div_line.append(letter);
         }
         
-        for (let i =0; i<5; i++)
-        {
-            let c = guess[i];
-            let j = feedback[i];
-            
-            if (j==1)
-            {
-                min_counts1[c]++;
-                exclude_sets[i].add(c);
-            }
-            else if (j==2)
-            {
-                min_counts1[c]++;
-                if (exclude_sets[i].size<25)
-                {
-                    for (let cc = 65; cc< 91; cc++)
-                    {
-                        let c2 = String.fromCharCode(cc);
-                        if (c2!=c) 
-                        {
-                            exclude_sets[i].add(c2);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                exclude_sets[i].add(c);
-            }
-        }
-        
-        for (let i =0; i<5; i++)
-        {
-            let c = guess[i];
-            let j = feedback[i];
-            if (j!=1 && j!=2)
-            {
-                max_counts1[c] = min_counts1[c];
-            }          
-        }
-        
-        for (let cc = 65; cc< 91; cc++)
-        {
-            let c = String.fromCharCode(cc);
-            if (min_counts1[c] > min_counts[c])
-            {
-                min_counts[c] = min_counts1[c];
-            }
-            if (max_counts1[c] < max_counts[c])
-            {
-                max_counts[c] = max_counts1[c];
-            }
-        }
-        
         for (let i = 0; i< options.length; i++)
         {
             const uword = options[i].toUpperCase();
             let remove = false;
-            let counts = create_counts();            
-            for (let j=0;j<5;j++)
+            
+            let feedback2 = judge(uword, guess);
+            for (let j = 0; j < 5; j++)
             {
-                let c = uword[j];
-                if (exclude_sets[j].has(c))
+                if (feedback2[j] != feedback[j])
                 {
                     remove = true;
                     break;
                 }
-                counts[c]++;
             }
-            if (!remove)
-            {
-                for(let c in counts)
-                {
-                    let min_count = min_counts[c];
-                    let max_count = max_counts[c];
-                    let count = counts[c];
-                    if (count<min_count || count>max_count)
-                    {
-                        remove = true;
-                        break;
-                    }
-                }
-            }
-            
+          
             if (remove)
             {
                 options.splice(i, 1);

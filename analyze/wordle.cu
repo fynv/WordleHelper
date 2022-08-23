@@ -55,12 +55,6 @@ inline __device__ int d_guess(int idx_truth, int idx_start)
 		masks_options[i] = 0xFFFFFFFF;
 	}
 
-	unsigned masks_exclude[WORD_LENGTH];
-	for (int i = 0; i < WORD_LENGTH; i++)
-	{
-		masks_exclude[i] = 0;		
-	}
-
 	int rounds = 0;
 	while (true)
 	{
@@ -84,97 +78,22 @@ inline __device__ int d_guess(int idx_truth, int idx_start)
 		char feedback[5];
 		d_judge(idx_truth, idx_guess, feedback);
 
-		unsigned char min_counts[26];
-		unsigned char max_counts[26];
-		for (int i = 0; i < 26; i++)
-		{
-			min_counts[i] = 0;
-			max_counts[i] = 5;
-		}
-
-		const char* guess = c_words[idx_guess];
-
-		for (int i = 0; i < 5; i++)
-		{
-			char c = guess[i];
-			int j = feedback[i];
-
-			if (j == 1)
-			{
-				min_counts[c - 'a']++;
-				masks_exclude[i] |= (1 << (c - 'a'));
-			}
-			else if (j == 2)
-			{
-				min_counts[c - 'a']++;
-				int count_set = __popc(masks_exclude[i]);
-				if (count_set < 25)
-				{
-					for (int k = 0; k < 26; k++)
-					{
-						char c2 = 'a' + k;
-						if (c2 != c)
-						{
-							masks_exclude[i] |= (1 <<(c2 -'a'));
-						}
-					}
-				}
-			}
-			else
-			{
-				masks_exclude[i] |= (1 << (c - 'a'));
-			}
-		}
-
-
-		for (int i = 0; i < 5; i++)
-		{
-			char c = guess[i];
-			int j = feedback[i];
-			if (j != 1 && j != 2)
-			{
-				max_counts[c - 'a'] = min_counts[c - 'a'];
-			}
-		}
-
 		for (int i = 0; i < NUM_WORDS; i++)
 		{
 			int idx_mask = (i >> 5);
 			int idx_bit = (i & 31);
 			if ((masks_options[idx_mask] & (1 << idx_bit)) == 0) continue;
 
-			const char* word = c_words[i];
 			bool remove = false;
 
-			unsigned char counts[26];
-			for (int j = 0; j < 26; j++)
-			{
-				counts[j] = 0;
-			}
-
+			char feedback2[5];
+			d_judge(i, idx_guess, feedback2);
 			for (int j = 0; j < 5; j++)
 			{
-				char c = word[j];
-				if ((masks_exclude[j] & (1 << (c - 'a'))) !=0)
+				if (feedback2[j] != feedback[j])
 				{
 					remove = true;
 					break;
-				}				
-				counts[c - 'a']++;
-			}
-
-			if (!remove)
-			{
-				for (int k = 0; k < 26; k++)
-				{
-					unsigned char min_count = min_counts[k];
-					unsigned char max_count = max_counts[k];
-					unsigned char count = counts[k];
-					if (count<min_count || count>max_count)
-					{
-						remove = true;
-						break;
-					}
 				}
 			}
 
