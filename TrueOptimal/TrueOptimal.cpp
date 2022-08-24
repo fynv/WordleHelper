@@ -312,6 +312,11 @@ int main()
 		fclose(fp);		
 	}
 
+	{
+		Info& info = InfoMap[first_hash];
+		printf("%f\n", info.ave_len);
+	}
+
 	printf("data/%llx\n", first_hash);
 	
 	return 0;

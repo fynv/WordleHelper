@@ -4,7 +4,7 @@
 #include <algorithm>
 
 #define WORD_LENGTH 5
-#define NUM_WORDS 2309
+#define NUM_WORDS 2315
 #define MASK_LENGTH ((NUM_WORDS+31)>>5)
 
 __constant__ int c_num_words;
