@@ -8,6 +8,7 @@
 #include <algorithm>
 #include "crc64.h"
 
+// ave = 3.517540
 
 void judge(const std::string& truth, const std::string& guess, int feedback[5])
 {
