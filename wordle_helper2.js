@@ -99,6 +99,13 @@
         guess_input.value = opt_suggestion;
     }
     
+    const clean_opt = ()=>
+    {
+        opt_suggestion = "#####";
+        opt_dict = {};
+        guess_input.value = options[0];
+    }
+    
     const reset = () =>
     {
         options = [...words];
@@ -169,7 +176,7 @@
         update_list();
         
         let has_opt = false;
-        if (guess == opt_suggestion.toUpperCase())
+        if (opt_suggestion != "#####" && guess == opt_suggestion.toUpperCase())
         {
             if (opt_dict.hasOwnProperty(feedback))
             {
@@ -184,7 +191,7 @@
         
         if (!has_opt)
         {
-            guess_input.value = options[0];
+            clean_opt();            
         }
         feedback_input.value = "";
     }
