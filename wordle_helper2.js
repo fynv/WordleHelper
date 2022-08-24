@@ -111,7 +111,7 @@
         options = [...words];
         update_list();
         
-        read_opt("ee1d06244819f9e4");
+        read_opt("d64d8a103311a203");
         
         feedback_input.value = "";
         div_status_content.innerHTML ="";        
