@@ -1,8 +1,8 @@
 (async () =>
 {
-    let response = await fetch("wordle_machine_optimized.txt");
+    const response = await fetch("wordle_machine_optimized.txt");
     const word_list = await response.text(); 
-    let words = word_list.split(/\r?\n/);
+    const words = word_list.split(/\r?\n/);
     
     const main_content = document.getElementById("main_content");
     
@@ -47,7 +47,6 @@
             
             div_word_list.append(div_word);
         }
-        guess_input.value = options[0];
     }
     
     const judge = (truth, guess) =>
@@ -83,11 +82,30 @@
         return feedback;
     }
     
+    const read_opt = async (fn_opt) =>
+    {
+        const response = await fetch("data/"+fn_opt);
+        const opt = await response.text(); 
+        const lines = opt.split(/\r?\n/);
+        opt_suggestion = lines[0];
+        opt_dict = {};
+        
+        for (let i=1; i<lines.length; i++)
+        {
+            let line = lines[i];
+            let item = line.split(' ');
+            opt_dict[item[0]] = item[1];
+        }
+        guess_input.value = opt_suggestion;
+    }
+    
     const reset = () =>
     {
         options = [...words];
         update_list();
-        guess_input.value = "slate";
+        
+        read_opt("ee1d06244819f9e4");
+        
         feedback_input.value = "";
         div_status_content.innerHTML ="";        
     }
@@ -149,6 +167,25 @@
         }
         
         update_list();
+        
+        let has_opt = false;
+        if (guess == opt_suggestion.toUpperCase())
+        {
+            if (opt_dict.hasOwnProperty(feedback))
+            {
+                let fn_opt = opt_dict[feedback];
+                if (fn_opt!='0')
+                {
+                    read_opt(fn_opt);
+                    has_opt = true;
+                }
+            }
+        }
+        
+        if (!has_opt)
+        {
+            guess_input.value = options[0];
+        }
         feedback_input.value = "";
     }
     
