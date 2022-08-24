@@ -1,2 +1,0 @@
-D:\workspace\WordleHelper\analyze\x64\Release\analyze.exe
-E:\workspace\WordleHelper\analyze\x64\Release\analyze.exe
