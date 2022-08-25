@@ -4,6 +4,10 @@
 #include <vector>
 #include <unordered_map>
 
+// 3.647 (wrong)
+// unbiased: 3.636285
+// biased: 3.468683
+
 void judge(const std::string& truth, const std::string& guess, int feedback[5])
 {
 	unsigned char used[5] = { 0,0,0,0,0 };
@@ -46,6 +50,8 @@ int encode(const int feedback[5])
 
 int main()
 {
+	double log2guess = 2.638445 / log(2315.0);
+
 	std::vector<std::string> words;
 	std::vector<std::string> alloweds;
 	{
@@ -61,6 +67,7 @@ int main()
 	}
 
 	{
+		alloweds = words;
 		FILE* fp = fopen("wordle-allowed-guesses.txt", "r");
 		char line[100];
 		while (fgets(line, 100, fp))
@@ -77,13 +84,15 @@ int main()
 		std::string best;
 		if (words.size() > 1)
 		{
-			std::vector<double> entropies(alloweds.size());
+			std::vector<double> guesses(alloweds.size());
+
 			#pragma omp parallel for			
 			for (int i = 0; i < (int)alloweds.size(); i++)
 			{
 				std::string guess = alloweds[i];
 				std::unordered_map<int, int> counts;
 
+				bool has_truth = false;
 				for (size_t j = 0; j < words.size(); j++)
 				{
 					std::string truth = words[j];
@@ -92,30 +101,36 @@ int main()
 					int code = encode(feedback);
 					int& count = counts[code];
 					count++;
+					if (code == 22222)
+					{
+						has_truth = true;
+					}
 				}
 
-				double count_all = (double)words.size();
-				double entropy = 0.0;
+				double time_guess = 0.0;
 				auto iter = counts.begin();
 				while (iter != counts.end())
 				{
 					double count = (double)iter->second;
-					double p = count / count_all;
-					double info = -log(p) / log(2.0);
-					entropy += p * info;
+					time_guess += (log(count) * log2guess + 1.0) * count;
 					iter++;
 				}
+				if (has_truth)
+				{
+					time_guess -= 1.0;
+				}
+				time_guess /= (double)words.size();
 
-				entropies[i] = entropy;
+				guesses[i] = time_guess;
 			}
 
-			double max_entropy = 0.0;
+			double min_guesses = FLT_MAX;
 			for (size_t i = 0; i < alloweds.size(); i++)
 			{
-				double entropy = entropies[i];
-				if (entropy > max_entropy)
+				double time_guess = guesses[i];
+				if (time_guess < min_guesses)
 				{
-					max_entropy = entropy;
+					min_guesses = time_guess;
 					best = alloweds[i];
 				}
 			}
@@ -185,6 +200,8 @@ int main()
 
 /*int main()
 {
+	double log2guess = 2.638445 / log(2315.0);
+
 	std::vector<std::string> all_words;
 	std::vector<std::string> alloweds;
 	{
@@ -200,6 +217,7 @@ int main()
 	}
 
 	{
+		alloweds = all_words;
 		FILE* fp = fopen("wordle-allowed-guesses.txt", "r");
 		char line[100];
 		while (fgets(line, 100, fp))
@@ -224,13 +242,15 @@ int main()
 			std::string best;
 			if (words.size() > 1)
 			{	
-				std::vector<double> entropies(alloweds.size());
+				std::vector<double> guesses(alloweds.size());
+
 				#pragma omp parallel for
 				for (int i = 0; i < (int)alloweds.size(); i++)
 				{
 					std::string guess = alloweds[i];
 					std::unordered_map<int, int> counts;
-
+					
+					bool has_truth = false;
 					for (size_t j = 0; j < words.size(); j++)
 					{
 						std::string truth = words[j];
@@ -239,30 +259,37 @@ int main()
 						int code = encode(feedback);
 						int& count = counts[code];
 						count++;
+						if (code == 22222)
+						{
+							has_truth = true;
+						}
 					}
 
-					double count_all = (double)words.size();
-					double entropy = 0.0;
+					
+					double time_guess = 0.0;
 					auto iter = counts.begin();
 					while (iter != counts.end())
 					{
 						double count = (double)iter->second;
-						double p = count / count_all;
-						double info = -log(p) / log(2.0);
-						entropy += p * info;
+						time_guess += (log(count) * log2guess + 1.0)* count;
 						iter++;
 					}
+					if (has_truth)
+					{						
+						time_guess -= 1.0;
+					}
+					time_guess /=(double)words.size();
 
-					entropies[i] = entropy;
+					guesses[i] = time_guess;
 				}
 
-				double max_entropy = 0.0;
+				double min_guesses = FLT_MAX;
 				for (size_t i = 0; i < alloweds.size(); i++)
 				{
-					double entropy = entropies[i];
-					if (entropy > max_entropy)
+					double time_guess = guesses[i];
+					if (time_guess < min_guesses)
 					{
-						max_entropy = entropy;
+						min_guesses = time_guess;
 						best = alloweds[i];
 					}
 				}
@@ -323,3 +350,4 @@ int main()
 
 	return 0;
 }*/
+
