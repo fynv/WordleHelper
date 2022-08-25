@@ -144,6 +144,18 @@ int main()
 
 		printf("%s\n", best.c_str());
 
+		while (true)
+		{
+			char line[100];
+			scanf("%s", line);
+			if (strlen(line) >= 5)
+			{
+				std::string s_line = line;
+				best = s_line.substr(0, 5);
+				break;
+			}
+		}
+
 		int feedback[5];
 		while (true)
 		{
