@@ -1,8 +1,18 @@
 (async () =>
 {
-    const response = await fetch("wordle_machine_optimized.txt");
-    const word_list = await response.text(); 
-    const words = word_list.split(/\r?\n/);
+
+    {
+        const response = await fetch("wordle_freq_sorted.txt");
+        const word_list = await response.text(); 
+        words = word_list.split(/\r?\n/);
+    }
+    
+    {
+        const response = await fetch("wordle-allowed-guesses.txt");
+        const word_list = await response.text(); 
+        alloweds = word_list.split(/\r?\n/);
+        alloweds = [...words, ...alloweds];       
+    }
     
     const main_content = document.getElementById("main_content");
     
@@ -103,7 +113,72 @@
     {
         opt_suggestion = "#####";
         opt_dict = {};
-        guess_input.value = options[0];
+    }
+    
+    const encode = (feedback) =>
+    {
+        return (((feedback[0] * 10 + feedback[1]) * 10 + feedback[2]) * 10 + feedback[3]) * 10 + feedback[4];
+    }
+    
+    const entropy_guess = ()=>
+    {
+        if (options.length<1) 
+        {
+            guess_input.value = "";
+            return;
+        }
+        
+        if (options.length<2) 
+        {
+            guess_input.value = options[0];
+            return;            
+        }
+        
+        let log2guess = 2.638445 / Math.log(2315.0);
+        
+        let min_guesses = 0xFFFFFFFF;
+        let best ="";
+        for (let guess of alloweds)
+        {
+            counts = {};
+            let has_truth = false;
+            for (let truth of options)
+            {
+                let feedback = judge(truth, guess);  
+                let code = encode(feedback);
+                if (counts.hasOwnProperty(code))
+                {
+                    counts[code]++;
+                }
+                else
+                {
+                    counts[code] = 1;
+                }
+                if (code == 22222)
+                {
+                    has_truth = true;
+                }
+            }
+            let time_guess = 0.0;
+            for (let code in counts)
+            {
+                let count = counts[code];
+                time_guess += (Math.log(count) * log2guess + 1.0) * count;
+            }
+            if (has_truth)
+            {
+                time_guess -= 1.0;
+            }
+            time_guess /= options.length;
+            
+            if (time_guess < min_guesses)
+            {
+                min_guesses = time_guess;
+                best = guess;
+            }
+        }
+        guess_input.value = best;
+        
     }
     
     const reset = () =>
@@ -191,7 +266,8 @@
         
         if (!has_opt)
         {
-            clean_opt();            
+            clean_opt(); 
+            entropy_guess();
         }
         feedback_input.value = "";
     }
