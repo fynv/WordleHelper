@@ -2,7 +2,9 @@
 #include <cmath>
 #include <string>
 #include <vector>
+#include <queue>
 #include <unordered_map>
+#include "crc64.h"
 
 // 3.647 (wrong)
 // unbiased: 3.636285
@@ -351,3 +353,220 @@ int main()
 	return 0;
 }*/
 
+
+/*
+struct Child
+{	
+	int feedback_code;
+	uint64_t key;
+};
+
+class SubList : public std::vector<short>
+{
+public:
+	std::string guess;
+	std::vector<Child> children;
+
+	uint64_t hash() const
+	{
+		return crc64(1, (const unsigned char*)data(), sizeof(short) * size());
+	}
+};
+
+typedef std::unordered_map<uint64_t, SubList> SublistDict;
+
+class Guesser
+{
+public:
+	std::vector<std::string> words;
+	std::vector<std::string> alloweds;
+
+	SublistDict Collection;
+
+	void Split(SubList& word_idxs, std::string guess, std::queue<uint64_t>& new_keys)
+	{
+		SublistDict sublists;
+		for (size_t j = 0; j < word_idxs.size(); j++)
+		{
+			std::string truth = words[word_idxs[j]];
+			int feedback[5];
+			judge(truth, guess, feedback);
+
+			uint64_t code = (uint64_t)encode(feedback);
+			SubList& sub = sublists[code];
+			sub.push_back(word_idxs[j]);
+		}
+
+		auto iter = sublists.begin();
+		while (iter != sublists.end())
+		{
+			const SubList& sub = iter->second;
+			if (sub.size() > 1)
+			{
+				uint64_t hash = sub.hash();
+
+				auto iter2 = Collection.find(hash);
+				if (iter2 == Collection.end())
+				{
+					Collection[hash] = sub;
+					new_keys.push(hash);
+				}
+
+				if (sub.size() < word_idxs.size())
+				{
+					word_idxs.children.push_back({ (int)(iter->first), hash });
+				}
+			}
+			iter++;
+		}
+	}
+
+	void Guess(SubList& word_idxs, std::queue<uint64_t>& new_keys)
+	{
+		double log2guess = 2.638445 / log(2315.0);
+
+		std::string best;
+		
+		std::vector<double> guesses(alloweds.size());
+		
+		#pragma omp parallel for			
+		for (int i = 0; i < (int)alloweds.size(); i++)
+		{
+			std::string guess = alloweds[i];
+			std::unordered_map<int, int> counts;
+
+			bool has_truth = false;
+			for (size_t j = 0; j < word_idxs.size(); j++)
+			{
+				std::string truth = words[word_idxs[j]];
+				int feedback[5];
+				judge(truth, guess, feedback);
+				int code = encode(feedback);
+				int& count = counts[code];
+				count++;
+				if (code == 22222)
+				{
+					has_truth = true;
+				}
+			}
+
+			double time_guess = 0.0;
+			auto iter = counts.begin();
+			while (iter != counts.end())
+			{
+				double count = (double)iter->second;
+				time_guess += (log(count) * log2guess + 1.0) * count;
+				iter++;
+			}
+			if (has_truth)
+			{
+				time_guess -= 1.0;
+			}
+			time_guess /= (double)words.size();
+
+			guesses[i] = time_guess;
+		}
+
+		double min_guesses = FLT_MAX;
+		for (size_t i = 0; i < alloweds.size(); i++)
+		{
+			double time_guess = guesses[i];
+			if (time_guess < min_guesses)
+			{
+				min_guesses = time_guess;
+				best = alloweds[i];
+			}
+		}
+
+		word_idxs.guess = best;
+
+		Split(word_idxs, best, new_keys);
+	}
+
+	void Guess(uint64_t key, std::queue<uint64_t>& new_keys)
+	{
+		SubList& word_idxs = Collection[key];
+		Guess(word_idxs, new_keys);
+	}
+};
+
+int main()
+{
+	Guesser guesser;
+
+	{
+		FILE* fp = fopen("wordle.txt", "r");
+		char line[100];
+		while (fgets(line, 100, fp))
+		{
+			char word[100];
+			sscanf(line, "%s", word);
+			guesser.words.push_back(word);
+		}
+		fclose(fp);
+	}
+
+	{
+		guesser.alloweds = guesser.words;
+		FILE* fp = fopen("wordle-allowed-guesses.txt", "r");
+		char line[100];
+		while (fgets(line, 100, fp))
+		{
+			char word[100];
+			sscanf(line, "%s", word);
+			guesser.alloweds.push_back(word);
+		}
+		fclose(fp);
+	}
+
+
+	SubList full_idxs;
+	full_idxs.resize(guesser.words.size());
+	for (size_t i = 0; i < full_idxs.size(); i++)
+	{
+		full_idxs[i] = i;
+	}
+
+	uint64_t first_hash = full_idxs.hash();
+	guesser.Collection[first_hash] = full_idxs;
+
+	std::queue<uint64_t> key_new_lists;
+	guesser.Guess(first_hash, key_new_lists);
+
+
+	while (key_new_lists.size() > 0)
+	{
+		uint64_t key = key_new_lists.front();
+		key_new_lists.pop();
+
+		guesser.Guess(key, key_new_lists);
+	}
+
+	auto iter = guesser.Collection.begin();
+	while (iter != guesser.Collection.end())
+	{
+		uint64_t key = iter->first;
+		SubList& lst = iter->second;
+
+		char filename[100];
+		sprintf(filename, "data1/%llx", key);
+		FILE* fp = fopen(filename, "w");
+
+		std::string guess = lst.guess;
+		fprintf(fp, "%s\n", guess.c_str());
+
+		for (size_t i = 0; i < lst.children.size(); i++)
+		{
+			Child& child = lst.children[i];			
+			fprintf(fp, "%05d %llx\n", child.feedback_code, child.key);
+		}
+
+		fclose(fp);
+
+		iter++;
+	}
+
+	printf("data/%llx\n", first_hash);
+
+	return 0;
+}*/
