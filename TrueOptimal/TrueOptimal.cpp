@@ -300,7 +300,7 @@ int main()
 		for (size_t i = 0; i < lst.children.size(); i++)
 		{
 			Child& child = lst.children[i];
-			if (child.idx_guess == idx_next)
+			if (child.idx_guess == idx_next && child.key!=0)
 			{
 				fprintf(fp, "%05d %llx\n", child.feedback_code, child.key);
 				if (child.key != 0)
