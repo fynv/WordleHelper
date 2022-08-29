@@ -212,160 +212,6 @@ int main()
 	return 0;
 }
 
-/*int main()
-{
-	double log2guess = 2.638445 / log(2315.0);
-
-	std::vector<std::string> all_words;
-	std::vector<std::string> alloweds;
-	{
-		FILE* fp = fopen("wordle.txt", "r");
-		char line[100];
-		while (fgets(line, 100, fp))
-		{
-			char word[100];
-			sscanf(line, "%s", word);
-			all_words.push_back(word);
-		}
-		fclose(fp);
-	}
-
-	{
-		alloweds = all_words;
-		FILE* fp = fopen("wordle-allowed-guesses.txt", "r");
-		char line[100];
-		while (fgets(line, 100, fp))
-		{
-			char word[100];
-			sscanf(line, "%s", word);
-			alloweds.push_back(word);
-		}
-		fclose(fp);
-	}
-
-	double ave_guesses = 0.0;
-	for (size_t i_truth = 0; i_truth < all_words.size(); i_truth++)
-	{
-		std::string truth_i = all_words[i_truth];
-
-		std::vector<std::string> words = all_words;
-
-		int guess_count = 0;
-		while (true)
-		{
-			std::string best;
-			if (words.size() > 1)
-			{	
-				std::vector<double> guesses(alloweds.size());
-
-				#pragma omp parallel for
-				for (int i = 0; i < (int)alloweds.size(); i++)
-				{
-					std::string guess = alloweds[i];
-					std::unordered_map<int, int> counts;
-					
-					bool has_truth = false;
-					for (size_t j = 0; j < words.size(); j++)
-					{
-						std::string truth = words[j];
-						int feedback[5];
-						judge(truth, guess, feedback);
-						int code = encode(feedback);
-						int& count = counts[code];
-						count++;
-						if (code == 22222)
-						{
-							has_truth = true;
-						}
-					}
-
-					
-					double time_guess = 0.0;
-					auto iter = counts.begin();
-					while (iter != counts.end())
-					{
-						double count = (double)iter->second;
-						time_guess += (log(count) * log2guess + 1.0)* count;
-						iter++;
-					}
-					if (has_truth)
-					{						
-						time_guess -= 1.0;
-					}
-					time_guess /=(double)words.size();
-
-					guesses[i] = time_guess;
-				}
-
-				double min_guesses = FLT_MAX;
-				for (size_t i = 0; i < alloweds.size(); i++)
-				{
-					double time_guess = guesses[i];
-					if (time_guess < min_guesses)
-					{
-						min_guesses = time_guess;
-						best = alloweds[i];
-					}
-				}
-			}
-			else
-			{
-				best = words[0];
-			}
-
-			int feedback[5];
-			judge(truth_i, best, feedback);
-			
-			guess_count++;
-
-			bool match = true;
-			for (int i = 0; i < 5; i++)
-			{
-				if (feedback[i] != 2)
-				{
-					match = false;
-					break;
-				}
-			}
-			if (match) break;
-
-			for (size_t i = 0; i < words.size(); i++)
-			{
-				std::string word = words[i];
-
-				bool remove = false;
-
-				int feedback2[5];
-				judge(word, best, feedback2);
-				for (int j = 0; j < 5; j++)
-				{
-					if (feedback2[j] != feedback[j])
-					{
-						remove = true;
-						break;
-					}
-				}
-
-				if (remove)
-				{
-					words.erase(words.begin() + i);
-					i--;
-				}
-			}
-		}
-
-		ave_guesses += (double)guess_count;
-
-		printf("%s %d\n", truth_i.c_str(), guess_count);
-	}
-	ave_guesses /= (double)all_words.size();
-
-	printf("%f\n", ave_guesses);
-
-	return 0;
-}*/
-
-
 /*
 struct Child
 {	
@@ -582,3 +428,136 @@ int main()
 
 	return 0;
 }*/
+
+/*void read_opt(const char* fn_opt, std::string& opt_suggestion, std::unordered_map<int, std::string>& opt_dict)
+{
+	std::string path_opt = std::string("data1/") + fn_opt;
+	FILE* fp = fopen(path_opt.c_str(), "r");
+
+	char line[1024];
+	fgets(line, 1024, fp);
+	char word[100];
+	sscanf(line, "%s", word);
+	opt_suggestion = word;
+
+	opt_dict.clear();
+	while (fgets(line, 1024, fp))
+	{		
+		std::string s_line = line;
+		size_t pos = s_line.find(' ');
+		if (pos == std::string::npos) continue;
+		int code;
+		sscanf(line, "%d", &code);			
+		sscanf(line + pos + 1, "%s", word);		
+		opt_dict[code] = word;
+	}
+
+	fclose(fp);
+
+}
+
+int main()
+{
+	double log2guess = 2.638445 / log(2315.0);
+
+	std::vector<std::string> all_words;
+	std::vector<std::string> alloweds;
+	{
+		FILE* fp = fopen("wordle.txt", "r");
+		char line[100];
+		while (fgets(line, 100, fp))
+		{
+			char word[100];
+			sscanf(line, "%s", word);
+			all_words.push_back(word);
+		}
+		fclose(fp);
+	}
+
+	{
+		alloweds = all_words;
+		FILE* fp = fopen("wordle-allowed-guesses.txt", "r");
+		char line[100];
+		while (fgets(line, 100, fp))
+		{
+			char word[100];
+			sscanf(line, "%s", word);
+			alloweds.push_back(word);
+		}
+		fclose(fp);
+	}
+
+	int max_guess_count = 0;
+	double ave_guesses = 0.0;
+
+	for (size_t i_truth = 0; i_truth < all_words.size(); i_truth++)
+	{
+		std::string truth_i = all_words[i_truth];
+		std::vector<std::string> words = all_words;
+
+		std::string fn_opt = "d64d8a103311a203";
+
+		int guess_count = 0;
+		while (true)
+		{		
+
+			std::string best;
+			std::unordered_map<int, std::string> opt_map;
+
+			if (words.size() > 1)
+			{			
+				read_opt(fn_opt.c_str(), best, opt_map);
+			}
+			else
+			{
+				best = words[0];
+			}
+
+			int feedback[5];
+			judge(truth_i, best, feedback);
+			int code = encode(feedback);
+
+			guess_count++;
+
+			if (code==22222) break;
+
+			for (size_t i = 0; i < words.size(); i++)
+			{
+				std::string word = words[i];
+
+				bool remove = false;
+
+				int feedback2[5];
+				judge(word, best, feedback2);
+				int code2 = encode(feedback2);
+
+				if (code2!=code)
+				{
+					words.erase(words.begin() + i);
+					i--;
+				}
+			}
+
+			if (words.size() > 1)
+			{
+				fn_opt = opt_map[code];
+			}
+		}
+
+		ave_guesses += (double)guess_count;
+		if (guess_count > max_guess_count)
+		{
+			max_guess_count = guess_count;
+			printf("Max: ");
+		}
+
+		printf("%s %d\n", truth_i.c_str(), guess_count);
+	}
+	ave_guesses /= (double)all_words.size();
+
+	printf("%f\n", ave_guesses);
+	printf("%d\n", max_guess_count);
+
+	return 0;
+}*/
+
