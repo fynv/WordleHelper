@@ -1,0 +1,16 @@
+cloth 1.433461
+octyl 21.000000
+
+clint 1.364458
+inlet 22.000000
+
+
+soare ->clint/inlet -> dumpy
+arise ->octyl->humph
+
+soare -> clint -> dumpy -> brogh -> wakfs
+arise -> octyl ->mangy -> aphid -> above
+
+
+
+

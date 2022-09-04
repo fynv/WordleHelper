@@ -49,7 +49,6 @@ int encode(const int feedback[5])
 	return (((feedback[0] * 10 + feedback[1]) * 10 + feedback[2]) * 10 + feedback[3]) * 10 + feedback[4];
 }
 
-
 int main()
 {
 	double log2guess = 2.638445 / log(2315.0);
@@ -243,74 +242,92 @@ int main()
 		fclose(fp);
 	}
 
-	struct Best
+	std::vector<std::string> guesses;
+
+	while (guesses.size() < 5)
 	{
-		int i = -1;	
-		double value = FLT_MAX;
-	};
+		std::vector<double> values(alloweds.size(), FLT_MAX);
 
-	Best best_time_guess;
-	Best best_max_count;
-
-	std::string guess1 = "soare";
-	//std::string guess1 = "arise";
-	for (int i = 0; i < (int)alloweds.size(); i++)
-	{
-		std::string guess2 = alloweds[i];
-		if (guess2 == guess1) continue;
-
-		std::unordered_map<uint64_t, int> counts;
-		int truth_count = 0;
-		for (int k = 0; k < (int)words.size(); k++)
+		#pragma omp parallel for			
+		for (int i = 0; i < (int)alloweds.size(); i++)
 		{
-			std::string truth = words[k];
-			int feedback1[5];
-			int feedback2[5];
-			judge(truth, guess1, feedback1);
-			judge(truth, guess2, feedback2);
-			int codes[2];
-			codes[0] = encode(feedback1);
-			codes[1] = encode(feedback2);
-
-			uint64_t hash = crc64(1, (const unsigned char*)codes, sizeof(int) * 2);
-			int& count = counts[hash];
-			count++;
-
-			if (codes[0] == 22222 || codes[1] == 22222)
+			std::string guess = alloweds[i];
+			bool guessed = false;
+			for (int j = 0; j < (int)guesses.size(); j++)
 			{
-				truth_count++;
+				if (guess == guesses[j])
+				{
+					guessed = true;
+					break;
+				}
+			}
+			if (guessed) continue;
+
+			std::unordered_map<uint64_t, int> counts;
+			int truth_count = 0;
+			for (int k = 0; k < (int)words.size(); k++)
+			{
+				std::string truth = words[k];
+				
+				std::vector<int> codes(guesses.size() + 1);
+				for (int j = 0; j < (int)guesses.size(); j++)
+				{
+					int feedback[5];
+					judge(truth, guesses[j], feedback);
+					int code = encode(feedback);
+					if (code == 22222)
+					{
+						truth_count++;
+					}
+					codes[j] = code;
+					
+				}
+				{
+					int feedback[5];
+					judge(truth, guess, feedback);
+					int code = encode(feedback);
+					if (code == 22222)
+					{
+						truth_count++;
+					}
+					codes[guesses.size()] = code;
+				}
+				uint64_t hash = crc64(1, (const unsigned char*)codes.data(), sizeof(int) * codes.size());
+				int& count = counts[hash];
+				count++;
+			}
+			double max_count = 0;
+			double time_guess = 0.0;
+			auto iter = counts.begin();
+			while (iter != counts.end())
+			{
+				double count = (double)iter->second;
+				time_guess += (log(count) * log2guess + 1.0) * count;
+				if (count > max_count) max_count = count;
+				iter++;
+			}
+			time_guess -= (double)truth_count;
+			time_guess /= (double)words.size();
+			// values[i] = time_guess;
+			values[i] = max_count;
+		}
+
+		int selected_id = -1;
+		double min_value = FLT_MAX;
+		for (int i = 0; i < (int)alloweds.size(); i++)
+		{
+			double value = values[i];
+			if (value < min_value)
+			{
+				min_value = value;
+				selected_id = i;
 			}
 		}
 
-		double max_count = 0;
-		double time_guess = 0.0;
-		auto iter = counts.begin();
-		while (iter != counts.end())
-		{
-			double count = (double)iter->second;
-			time_guess += (log(count) * log2guess + 1.0) * count;
-			if (count > max_count) max_count = count;
-			iter++;
-		}
-		time_guess -= (double)truth_count;
-		time_guess /= (double)words.size();
-
-		if (time_guess < best_time_guess.value)
-		{
-			best_time_guess.i = i;		
-			best_time_guess.value = time_guess;
-		}
-
-		if (max_count < best_max_count.value)
-		{
-			best_max_count.i = i;			
-			best_max_count.value = max_count;
-		}
+		std::string selected = alloweds[selected_id];
+		guesses.push_back(selected);
+		printf("%s\n", selected.c_str());
 	}
-	
-
-	printf("%s %f\n", alloweds[best_time_guess.i].c_str(),  best_time_guess.value);
-	printf("%s %f\n", alloweds[best_max_count.i].c_str(), best_max_count.value);
 }*/
 
 
